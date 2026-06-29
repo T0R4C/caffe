@@ -9,6 +9,8 @@ import { AREAS, matchAreaByCoordinates } from './config.js';
 import { fetchAllAreas } from './overpass.js';
 import { SEED_CAFES } from './seed-data.js';
 import { enrichCafeWithFoursquare } from './places-api.js';
+import { normalizeCafeData } from './data-cleaner.js';
+import { launchBrowser, closeBrowser, searchCafeWebData } from './puppeteer-scraper.js';
 
 // Flags
 const DRY_RUN = process.argv.includes('--dry-run');
@@ -117,7 +119,8 @@ async function main() {
 
     let allOverpassCafes = [];
     for (const [areaSlug, cafes] of overpassResults) {
-      allOverpassCafes = allOverpassCafes.concat(cafes);
+      const cleanedCafes = cafes.map(normalizeCafeData);
+      allOverpassCafes = allOverpassCafes.concat(cleanedCafes);
     }
     console.log(`\n📊 Total from Overpass: ${allOverpassCafes.length} cafes\n`);
 
@@ -127,7 +130,8 @@ async function main() {
 
     // ── Step 3: Merge data ──
     console.log('═══ Step 3: Merging data ═══');
-    const mergedCafes = mergeCafes(allOverpassCafes, SEED_CAFES);
+    const cleanedSeedCafes = SEED_CAFES.map(normalizeCafeData);
+    const mergedCafes = mergeCafes(allOverpassCafes, cleanedSeedCafes);
     console.log(`🔀 After merge: ${mergedCafes.length} unique cafes\n`);
 
     // ── Step 4: Enrich and prepare for upsert ──
@@ -139,6 +143,13 @@ async function main() {
       areaMap = await supabaseClient.getAllAreas();
       console.log(`📍 Loaded ${areaMap.size} area records from Supabase`);
     }
+
+    let browser = null;
+    let puppeteerCount = 0;
+    
+    // Only launch Puppeteer if we want deep scraping
+    console.log('  🌐 Initializing Puppeteer for deep scraping...');
+    browser = await launchBrowser();
 
     const preparedCafes = [];
     let enrichedCount = 0;
@@ -153,6 +164,18 @@ async function main() {
       const enrichedData = process.env.FOURSQUARE_API_KEY ? await enrichCafeWithFoursquare(cafe) : cafe;
       if (enrichedData.source.includes('foursquare')) enrichedCount++;
 
+      // Puppeteer Enrichment (Instagram fallback)
+      let instagram = enrichedData.instagram;
+      if (!instagram && browser && puppeteerCount < 20) { // Limit to 20 to avoid long runs
+        const webData = await searchCafeWebData(browser, enrichedData.name, areaSlug);
+        if (webData.instagram) {
+          instagram = webData.instagram;
+          enrichedData.source += '+puppeteer';
+          puppeteerCount++;
+          console.log(`  🔍 [Puppeteer] Found Instagram for ${enrichedData.name}: ${instagram}`);
+        }
+      }
+
       preparedCafes.push({
         place_id: enrichedData.place_id,
         name: enrichedData.name,
@@ -163,7 +186,7 @@ async function main() {
         longitude: enrichedData.longitude,
         phone: enrichedData.phone || null,
         website: enrichedData.website || null,
-        instagram: enrichedData.instagram || null,
+        instagram: instagram || null,
         rating: enrichedData.rating !== undefined && enrichedData.rating !== null ? enrichedData.rating : parseFloat((Math.random() * (4.9 - 3.5) + 3.5).toFixed(1)),
         total_reviews: enrichedData.total_reviews || Math.floor(Math.random() * 500) + 15,
         price_level: enrichedData.price_level || null,
@@ -179,7 +202,10 @@ async function main() {
       });
     }
     
+    if (browser) await closeBrowser(browser);
+
     if (enrichedCount > 0) console.log(`✨ Enriched ${enrichedCount} cafes with Foursquare data`);
+    if (puppeteerCount > 0) console.log(`🤖 Found ${puppeteerCount} Instagram links via Puppeteer`);
 
     // Filter out cafes without names
     const validCafes = preparedCafes.filter((c) => c.name && c.latitude && c.longitude);
