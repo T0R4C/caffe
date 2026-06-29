@@ -64,6 +64,18 @@ export async function renderDetail(slug) {
           </div>
           
           <div class="detail-section">
+            <h3>Fasilitas</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
+              ${(cafe.amenities && Object.keys(cafe.amenities).length > 0) ? Object.entries(cafe.amenities).map(([key, val]) => val ? `<div class="chip">✨ ${key.replace(/_/g, ' ')}</div>` : '').join('') : `
+                <div class="chip">📶 WiFi Cepat</div>
+                <div class="chip">🔌 Stopkontak</div>
+                <div class="chip">🅿️ Parkir Luas</div>
+                <div class="chip">❄️ Full AC</div>
+              `}
+            </div>
+          </div>
+          
+          <div class="detail-section">
             <h3>Menu Populer</h3>
             <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
               ${mockMenus.map(menu => `
@@ -129,18 +141,26 @@ export async function renderDetail(slug) {
                   <div class="info-text"><a href="${cafe.instagram}" target="_blank" style="color: var(--color-primary); text-decoration: underline;">${cafe.instagram}</a></div>
                 </div>
               </div>` : ''}
+              ${cafe.opening_hours ? `
+              <div class="info-item">
+                <div class="info-icon">🕒</div>
+                <div>
+                  <div class="info-label">Jam Buka</div>
+                  <div class="info-text">${typeof cafe.opening_hours === 'string' ? cafe.opening_hours : (cafe.opening_hours.raw || 'Lihat di Maps')}</div>
+                </div>
+              </div>` : ''}
             </div>
           </div>
           
+          ${cafe.photos && cafe.photos.length > 0 ? `
           <div class="detail-section">
-            <h3>Fasilitas</h3>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--space-md);">
-              <div class="chip">📶 WiFi Cepat</div>
-              <div class="chip">🔌 Stopkontak</div>
-              <div class="chip">🅿️ Parkir Luas</div>
-              <div class="chip">❄️ Full AC</div>
+            <h3>Galeri Foto</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px;">
+              ${cafe.photos.slice(0,4).map(photo => `
+                <img src="${photo}" style="width: 100%; height: 100px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--color-border);" alt="Foto Kafe" loading="lazy">
+              `).join('')}
             </div>
-          </div>
+          </div>` : ''}
         </div>
       </div>
     `;

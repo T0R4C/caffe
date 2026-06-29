@@ -11,6 +11,13 @@ export const DEMO_CAFES = [
     total_reviews: 3200,
     price_level: '$',
     thumbnail: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&h=400&fit=crop',
+    photos: [
+      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=400&fit=crop'
+    ],
+    opening_hours: 'Sen-Min: 08:00 - 22:00',
+    amenities: { wifi: true, parkir: true, outdoor_seating: true, pet_friendly: false },
     description: 'Pelopor Kopi Susu Tetangga yang legendaris.'
   },
   {
@@ -24,6 +31,12 @@ export const DEMO_CAFES = [
     total_reviews: 1850,
     price_level: '$$$',
     thumbnail: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&h=400&fit=crop',
+    photos: [
+      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop'
+    ],
+    opening_hours: 'Sel-Sab: 09:30 - 17:30, Sen & Min: Tutup',
+    amenities: { wifi: true, roastery: true, indoor_cozy: true, pastry: true },
     description: 'Salah satu roastery terbaik di Jakarta.'
   },
   {
