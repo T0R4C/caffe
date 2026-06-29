@@ -179,11 +179,11 @@ async function main() {
       });
     }
     
-    if (enrichedCount > 0) console.log(\`✨ Enriched \${enrichedCount} cafes with Foursquare data\`);
+    if (enrichedCount > 0) console.log(`✨ Enriched ${enrichedCount} cafes with Foursquare data`);
 
     // Filter out cafes without names
     const validCafes = preparedCafes.filter((c) => c.name && c.latitude && c.longitude);
-    console.log(\`✅ \${validCafes.length} valid cafes ready for upsert\\n\`);
+    console.log(`✅ ${validCafes.length} valid cafes ready for upsert\n`);
 
     // ── Step 5: Upsert to Supabase (or log in dry-run) ──
     if (DRY_RUN) {
