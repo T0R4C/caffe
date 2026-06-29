@@ -6,13 +6,12 @@ import { renderExplore } from './pages/explore.js';
 import { renderDetail } from './pages/detail.js';
 
 const app = document.getElementById('app');
-const navbar = renderNavbar();
-const footer = renderFooter();
 
 async function router() {
   const hash = window.location.hash || '#/';
   
   app.innerHTML = '';
+  const navbar = renderNavbar();
   app.appendChild(navbar);
   
   let pageContent;
@@ -29,11 +28,15 @@ async function router() {
   }
   
   app.appendChild(pageContent);
+  
+  // Footer only on home and detail, not explore (due to split screen)
   if (!hash.startsWith('#/explore')) {
+    const footer = renderFooter();
     app.appendChild(footer);
   }
   
-  window.scrollTo(0, 0);
+  // Scroll to top on route change
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 window.addEventListener('hashchange', router);

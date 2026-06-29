@@ -6,41 +6,54 @@ export async function renderHome() {
   const section = document.createElement('div');
   section.className = 'page-home';
   
-  // Hero
+  // HERO
   const hero = document.createElement('section');
   hero.className = 'hero';
   hero.innerHTML = `
-    <h2 class="text-gradient">Temukan Kafe Terbaik<br>di Jakarta</h2>
-    <p>Jelajahi 500+ kafe dan coffee shop terbaik se-DKI Jakarta. Dari roastery premium hingga kopi susu legendaris.</p>
-    <a href="#/explore" class="btn" style="background: var(--color-primary); padding: 12px 24px; border-radius: var(--radius-full); font-weight: 600;">Mulai Eksplorasi →</a>
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h2 class="text-gradient">Estetika Kopi Jakarta<br>di Ujung Jari Anda</h2>
+      <p>Kurasi premium 700+ kedai kopi dan roastery terbaik se-DKI Jakarta. Temukan suasana ideal untuk bekerja, nongkrong, atau sekadar menyendiri.</p>
+      <a href="#/explore" class="btn btn-primary">
+        Mulai Eksplorasi 
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
   `;
   section.appendChild(hero);
 
-  // Stats
-  const stats = document.createElement('div');
-  stats.className = 'container stats-grid';
-  stats.innerHTML = `
-    <div class="stat-card"><h3>500+</h3><p>Kafe Terdata</p></div>
-    <div class="stat-card"><h3>4.5</h3><p>Rata-rata Rating</p></div>
-    <div class="stat-card"><h3>6</h3><p>Wilayah Jakarta</p></div>
-  `;
-  section.appendChild(stats);
-
-  // Featured
+  // FEATURED
   const featured = document.createElement('div');
   featured.className = 'container';
-  featured.innerHTML = '<h2>Kafe Populer</h2>';
+  featured.style.marginTop = 'var(--space-2xl)';
   
-  const grid = document.createElement('div');
-  grid.className = 'featured-grid';
-  
-  const cafes = await getCafes({ limit: 4 });
-  cafes.forEach(cafe => {
-    grid.appendChild(createCafeCard(cafe));
-  });
-  
-  featured.appendChild(grid);
+  featured.innerHTML = `
+    <div class="section-title">
+      <h2>Top Rated <span style="color: var(--color-primary); font-weight: 300;">Cafes</span></h2>
+      <a href="#/explore" style="color: var(--color-text-muted); font-weight: 500;">Lihat Semua Peta →</a>
+    </div>
+    <div class="featured-grid" id="home-featured-grid">
+      <!-- Cards will be injected here -->
+      <div style="color: var(--color-text-muted);">Memuat data kafe premium...</div>
+    </div>
+  `;
   section.appendChild(featured);
+
+  // Fetch data
+  setTimeout(async () => {
+    const grid = section.querySelector('#home-featured-grid');
+    grid.innerHTML = '';
+    const cafes = await getCafes({ limit: 6 });
+    // Sort by rating roughly
+    cafes.sort((a,b) => (b.rating || 0) - (a.rating || 0));
+    
+    cafes.slice(0, 6).forEach((cafe, index) => {
+      const card = createCafeCard(cafe);
+      card.style.animationDelay = `${index * 100}ms`;
+      grid.appendChild(card);
+    });
+  }, 100);
 
   return section;
 }

@@ -1,14 +1,29 @@
 
 export function renderNavbar() {
   const nav = document.createElement('nav');
-  nav.className = 'navbar';
+  nav.className = 'navbar glass-panel';
+  
+  // Add scroll listener for styling
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      nav.classList.add('scrolled');
+    } else {
+      nav.classList.remove('scrolled');
+    }
+  });
+
+  const hash = window.location.hash || '#/';
+
   nav.innerHTML = `
     <div class="navbar-brand">
-      <a href="#/"><h1>☕ JakartaCaffe</h1></a>
+      <a href="#/">
+        <span style="font-size: 1.75rem;">☕</span>
+        <h1 style="margin: 0; font-size: 1.25rem; letter-spacing: -0.5px;">Jakarta<span style="color: var(--color-text-main);">Caffe</span></h1>
+      </a>
     </div>
     <div class="navbar-nav">
-      <a href="#/">Beranda</a>
-      <a href="#/explore">Eksplorasi</a>
+      <a href="#/" class="${hash === '#/' ? 'active' : ''}">Beranda</a>
+      <a href="#/explore" class="${hash.startsWith('#/explore') ? 'active' : ''}">Eksplorasi</a>
     </div>
   `;
   return nav;

@@ -1,18 +1,24 @@
 
 :root {
-  /* Colors */
-  --color-bg-dark: #0D0D0D;
-  --color-bg-card: #1A1A1A;
-  --color-primary: #6F4E37;
-  --color-secondary: #D4A574;
-  --color-accent: #2D5016;
-  --color-text-main: #FFF8F0;
-  --color-text-muted: #A0A0A0;
-  --color-border: rgba(255, 255, 255, 0.1);
+  /* Colors - Premium Dark Coffee Theme */
+  --color-bg-dark: #0A0908;
+  --color-bg-card: #151312;
+  --color-bg-card-hover: #1E1C1A;
+  
+  --color-primary: #D4A373; /* Warm latte */
+  --color-primary-dark: #A98460;
+  --color-secondary: #FAEDCD; /* Cream */
+  --color-accent: #E9EDC9;
+  
+  --color-text-main: #FEFAE0;
+  --color-text-muted: #A8A196;
+  
+  --color-border: rgba(254, 250, 224, 0.08);
+  --color-glass: rgba(21, 19, 18, 0.6);
 
   /* Typography */
-  --font-heading: 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 
   /* Spacing */
   --space-xs: 4px;
@@ -21,18 +27,24 @@
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
+  --space-3xl: 80px;
 
   /* Border Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-card: 0 10px 30px rgba(0,0,0,0.5);
-  --shadow-glow: 0 0 20px rgba(111, 78, 55, 0.4);
+  --shadow-sm: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.4);
+  --shadow-lg: 0 16px 40px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 24px rgba(212, 163, 115, 0.15);
+  --shadow-glow-strong: 0 0 32px rgba(212, 163, 115, 0.3);
 
   /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-normal: 300ms ease;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
 }
