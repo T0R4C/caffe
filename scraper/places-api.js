@@ -104,6 +104,35 @@ export async function getFoursquareDetails(fsq_id) {
 }
 
 /**
+ * Get tips (reviews) for a Foursquare place ID.
+ */
+export async function getFoursquareReviews(fsq_id) {
+  if (!FOURSQUARE_API_KEY || !fsq_id) return [];
+
+  try {
+    const response = await fetch(`https://api.foursquare.com/v3/places/${fsq_id}/tips?sort=POPULAR&limit=5`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': FOURSQUARE_API_KEY
+      }
+    });
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return data.map(tip => ({
+      author_name: tip.created_by ? `${tip.created_by.first_name || ''} ${tip.created_by.last_name || ''}`.trim() : 'Anonymous',
+      rating: 5, // Tips don't have explicit ratings in v3, assume 5 for positive sentiment if we scrape them
+      review_text: tip.text,
+      created_at: tip.created_at
+    }));
+  } catch (error) {
+    return [];
+  }
+}
+
+/**
  * Enrich a cafe object with Foursquare data.
  * @param {object} cafe 
  */
@@ -129,6 +158,7 @@ export async function enrichCafeWithFoursquare(cafe) {
     total_reviews: details?.total_reviews || cafe.total_reviews,
     price_level: details?.price_level || cafe.price_level,
     opening_hours: details?.opening_hours || cafe.opening_hours,
+    fsq_id: fsq_id,
     source: cafe.source + '+foursquare'
   };
 }

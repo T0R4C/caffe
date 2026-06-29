@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS user_reviews (
   user_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   review_text TEXT,
+  author_name TEXT,
   photos TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

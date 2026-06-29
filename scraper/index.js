@@ -8,9 +8,9 @@
 import { AREAS, matchAreaByCoordinates } from './config.js';
 import { fetchAllAreas } from './overpass.js';
 import { SEED_CAFES } from './seed-data.js';
-import { enrichCafeWithFoursquare } from './places-api.js';
+import { enrichCafeWithFoursquare, getFoursquareReviews } from './places-api.js';
 import { normalizeCafeData } from './data-cleaner.js';
-import { launchBrowser, closeBrowser, searchCafeWebData } from './puppeteer-scraper.js';
+import { launchBrowser, closeBrowser, searchCafeWebData, scrapeMenuWebData } from './puppeteer-scraper.js';
 
 // Flags
 const DRY_RUN = process.argv.includes('--dry-run');
@@ -235,17 +235,53 @@ async function main() {
         console.log(`   ${area}: ${count} cafes`);
       }
     } else {
-      console.log('═══ Step 5: Upserting to Supabase ═══');
-      const { inserted, updated } = await supabaseClient.upsertCafes(validCafes);
+      console.log('  ⏳ Upserting cafes to Supabase...');
+      const result = await supabaseClient.upsertCafes(validCafes);
+      console.log(`  ✅ Inserted: ${result.inserted}, Updated: ${result.updated}`);
+      
+      if (result.records && result.records.length > 0) {
+        console.log('\n═══ Step 6: Fetching Reviews & Menus ═══');
+        let reviewCount = 0;
+        let menuCount = 0;
+        
+        // Re-launch browser for menus to avoid memory bloat from previous step
+        const menuBrowser = await launchBrowser();
+        
+        for (const record of result.records) {
+          const originalCafe = validCafes.find(c => c.place_id === record.place_id);
+          if (!originalCafe) continue;
+          
+          // 1. Fetch & Upsert Reviews (Foursquare)
+          if (originalCafe.fsq_id) {
+            const reviews = await getFoursquareReviews(originalCafe.fsq_id);
+            if (reviews.length > 0) {
+              await supabaseClient.upsertReviews(record.id, reviews);
+              reviewCount += reviews.length;
+            }
+          }
+          
+          // 2. Fetch & Upsert Menus (Puppeteer)
+          // Limit menu scraping to first 100 cafes to avoid long running times in GH Actions
+          if (menuCount < 100 && menuBrowser) {
+            const menus = await scrapeMenuWebData(menuBrowser, record.name, originalCafe.area_id ? '' : 'Jakarta', originalCafe.price_level);
+            if (menus.length > 0) {
+              await supabaseClient.upsertMenus(record.id, menus);
+              menuCount += menus.length;
+            }
+          }
+        }
+        
+        if (menuBrowser) await closeBrowser(menuBrowser);
+        console.log(`  ✅ Upserted ${reviewCount} reviews and ${menuCount} menu items.`);
+      }
 
-      const stats = {
-        total_found: validCafes.length,
-        total_new: inserted,
-        total_updated: updated,
-      };
-
-      await supabaseClient.logScrapeComplete(logId, stats);
-      console.log(`\n📊 Upsert results: ${inserted} new, ${updated} updated`);
+      if (logId) {
+        await supabaseClient.logScrapeComplete(logId, {
+          total_found: allOverpassCafes.length,
+          total_new: result.inserted,
+          total_updated: result.updated,
+        });
+      }
     }
 
     // ── Summary ──

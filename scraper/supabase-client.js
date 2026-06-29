@@ -89,6 +89,7 @@ export async function upsertCafes(cafes) {
   const BATCH_SIZE = 50;
   let totalInserted = 0;
   let totalUpdated = 0;
+  let allUpserted = [];
 
   for (let i = 0; i < cafes.length; i += BATCH_SIZE) {
     const batch = cafes.slice(i, i + BATCH_SIZE);
@@ -99,11 +100,15 @@ export async function upsertCafes(cafes) {
         onConflict: 'place_id',
         ignoreDuplicates: false,
       })
-      .select('place_id');
+      .select('id, place_id, name');
 
     if (error) {
       console.error(`  ❌ Upsert batch error (rows ${i}-${i + batch.length}):`, error.message);
       continue;
+    }
+    
+    if (data) {
+      allUpserted = allUpserted.concat(data);
     }
 
     // Count inserts vs updates
@@ -116,7 +121,7 @@ export async function upsertCafes(cafes) {
     }
   }
 
-  return { inserted: totalInserted, updated: totalUpdated };
+  return { inserted: totalInserted, updated: totalUpdated, records: allUpserted };
 }
 
 /**
@@ -189,6 +194,52 @@ export async function logScrapeError(logId, error) {
 
   if (dbError) {
     console.error('❌ Error updating scrape log with error:', dbError.message);
+  }
+}
+
+/**
+ * Upsert reviews for a specific cafe.
+ */
+export async function upsertReviews(cafeId, reviews) {
+  if (!reviews || reviews.length === 0) return;
+  
+  const formatted = reviews.map(r => ({
+    cafe_id: cafeId,
+    rating: r.rating,
+    review_text: r.review_text,
+    author_name: r.author_name,
+    created_at: r.created_at || new Date().toISOString()
+  }));
+
+  const { error } = await supabase
+    .from('user_reviews')
+    .insert(formatted); // We use insert because we might not have unique identifiers for tips other than the combination of text and cafe, but simple insert is fine for scraping
+
+  if (error) {
+    console.error(`  ❌ Error inserting reviews:`, error.message);
+  }
+}
+
+/**
+ * Upsert menus for a specific cafe.
+ */
+export async function upsertMenus(cafeId, menus) {
+  if (!menus || menus.length === 0) return;
+  
+  const formatted = menus.map(m => ({
+    cafe_id: cafeId,
+    item_name: m.name,
+    description: m.desc,
+    price: m.price,
+    category: m.category
+  }));
+
+  const { error } = await supabase
+    .from('cafe_menus')
+    .insert(formatted);
+
+  if (error) {
+    console.error(`  ❌ Error inserting menus:`, error.message);
   }
 }
 
