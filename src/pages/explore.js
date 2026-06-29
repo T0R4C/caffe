@@ -6,7 +6,7 @@ export async function renderExplore() {
   const section = document.createElement('div');
   section.className = 'page-explore';
   
-  section.innerHTML = \`
+  section.innerHTML = `
     <div class="explore-layout">
       <!-- SIDEBAR LIST -->
       <div class="explore-sidebar">
@@ -34,7 +34,7 @@ export async function renderExplore() {
       <!-- MAP -->
       <div class="explore-map" id="explore-map"></div>
     </div>
-  \`;
+  `;
 
   setTimeout(async () => {
     // 1. Initialize Map
@@ -74,7 +74,7 @@ export async function renderExplore() {
       markersLayer.clearLayers();
 
       if (cafes.length === 0) {
-        listContainer.innerHTML = \`<div style="text-align: center; padding: 2rem; color: var(--color-text-muted);">Tidak ada kafe ditemukan di area ini.</div>\`;
+        listContainer.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--color-text-muted);">Tidak ada kafe ditemukan di area ini.</div>`;
         return;
       }
 
@@ -84,7 +84,7 @@ export async function renderExplore() {
       cafes.slice(0, 50).forEach((cafe, index) => {
         // Render Card
         const card = createCafeCard(cafe);
-        card.style.animationDelay = \`\${(index % 10) * 50}ms\`;
+        card.style.animationDelay = `${(index % 10) * 50}ms`;
         
         // Add hover effect to highlight on map
         card.addEventListener('mouseenter', () => {
@@ -100,13 +100,13 @@ export async function renderExplore() {
           const latLng = [cafe.latitude, cafe.longitude];
           const marker = L.marker(latLng, { icon: coffeeIcon }).addTo(markersLayer);
           
-          marker.bindPopup(\`
+          marker.bindPopup(`
             <div style="font-family: var(--font-body); text-align: center;">
-              <strong>\${cafe.name}</strong><br>
-              <span style="color: #FFD700;">★ \${cafe.rating}</span><br>
-              <a href="#/cafe/\${cafe.slug}" style="color: var(--color-primary); text-decoration: underline; font-size: 0.8rem; margin-top: 4px; display: inline-block;">Lihat Detail</a>
+              <strong>${cafe.name}</strong><br>
+              <span style="color: #FFD700;">★ ${cafe.rating}</span><br>
+              <a href="#/cafe/${cafe.slug}" style="color: var(--color-primary); text-decoration: underline; font-size: 0.8rem; margin-top: 4px; display: inline-block;">Lihat Detail</a>
             </div>
-          \`);
+          `);
           
           bounds.extend(latLng);
         }
