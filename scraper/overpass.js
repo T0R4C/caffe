@@ -90,6 +90,8 @@ export async function fetchCafesForArea(area) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+          'User-Agent': 'JakartaCaffe-Scraper/1.0 (https://github.com/T0R4C/caffe)',
         },
         body: `data=${encodeURIComponent(query)}`,
         signal: AbortSignal.timeout(OVERPASS_API.timeout * 1000 + 10000), // query timeout + 10s buffer
