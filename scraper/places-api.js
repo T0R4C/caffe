@@ -17,13 +17,13 @@ export async function searchFoursquarePlace(name, lat, lng) {
   try {
     const query = new URLSearchParams({
       query: name,
-      ll: \`\${lat},\${lng}\`,
+      ll: `${lat},${lng}`,
       radius: 500, // Search within 500 meters
       categories: '13032', // Coffee Shop Category ID
       limit: 1,
     });
 
-    const response = await fetch(\`https://api.foursquare.com/v3/places/search?\${query}\`, {
+    const response = await fetch(`https://api.foursquare.com/v3/places/search?${query}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -57,7 +57,7 @@ export async function getFoursquarePhotos(fsq_id) {
   if (!FOURSQUARE_API_KEY || !fsq_id) return [];
 
   try {
-    const response = await fetch(\`https://api.foursquare.com/v3/places/\${fsq_id}/photos?limit=3\`, {
+    const response = await fetch(`https://api.foursquare.com/v3/places/${fsq_id}/photos?limit=3`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -68,7 +68,7 @@ export async function getFoursquarePhotos(fsq_id) {
     if (!response.ok) return [];
 
     const data = await response.json();
-    return data.map(photo => \`\${photo.prefix}original\${photo.suffix}\`);
+    return data.map(photo => `${photo.prefix}original${photo.suffix}`);
   } catch (error) {
     return [];
   }
@@ -81,7 +81,7 @@ export async function getFoursquareDetails(fsq_id) {
   if (!FOURSQUARE_API_KEY || !fsq_id) return null;
 
   try {
-    const response = await fetch(\`https://api.foursquare.com/v3/places/\${fsq_id}?fields=rating,stats,hours,price\`, {
+    const response = await fetch(`https://api.foursquare.com/v3/places/${fsq_id}?fields=rating,stats,hours,price`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
