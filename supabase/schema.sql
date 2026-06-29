@@ -167,3 +167,81 @@ INSERT INTO areas (name, slug, latitude, longitude) VALUES
   ('Jakarta Utara', 'jakarta-utara', -6.1384, 106.8631),
   ('Kepulauan Seribu', 'kepulauan-seribu', -5.7222, 106.5947)
 ON CONFLICT (slug) DO NOTHING;
+
+-- ============================================================
+-- Table: user_profiles (Profil Pengguna)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name TEXT,
+  avatar_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- Table: cafe_menus (Menu Kafe)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cafe_menus (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cafe_id UUID NOT NULL REFERENCES cafes(id) ON DELETE CASCADE,
+  item_name TEXT NOT NULL,
+  description TEXT,
+  price DECIMAL(10, 2),
+  category TEXT, -- e.g., 'Coffee', 'Non-Coffee', 'Pastry', 'Main Course'
+  image_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- Table: user_reviews (Ulasan Pengguna)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cafe_id UUID NOT NULL REFERENCES cafes(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  review_text TEXT,
+  photos TEXT[] DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(cafe_id, user_id)
+);
+
+-- ============================================================
+-- Table: user_favorites (Bookmark/Favorit)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_favorites (
+  user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+  cafe_id UUID NOT NULL REFERENCES cafes(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (user_id, cafe_id)
+);
+
+-- ============================================================
+-- RLS Policies for New Tables
+-- ============================================================
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cafe_menus ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_favorites ENABLE ROW LEVEL SECURITY;
+
+-- Public read access for menus and reviews
+CREATE POLICY "Anyone can read menus" ON cafe_menus FOR SELECT USING (true);
+CREATE POLICY "Anyone can read reviews" ON user_reviews FOR SELECT USING (true);
+CREATE POLICY "Anyone can read user profiles" ON user_profiles FOR SELECT USING (true);
+
+-- Service role access
+CREATE POLICY "Service role manages menus" ON cafe_menus FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role manages reviews" ON user_reviews FOR ALL USING (auth.role() = 'service_role');
+
+-- Authenticated user policies
+CREATE POLICY "Users can insert their own reviews" ON user_reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own reviews" ON user_reviews FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own reviews" ON user_reviews FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can read their own favorites" ON user_favorites FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own favorites" ON user_favorites FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own favorites" ON user_favorites FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own profile" ON user_profiles FOR UPDATE USING (auth.uid() = id);

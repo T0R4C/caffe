@@ -8,6 +8,7 @@
 import { AREAS, matchAreaByCoordinates } from './config.js';
 import { fetchAllAreas } from './overpass.js';
 import { SEED_CAFES } from './seed-data.js';
+import { enrichCafeWithFoursquare } from './places-api.js';
 
 // Flags
 const DRY_RUN = process.argv.includes('--dry-run');
@@ -139,41 +140,50 @@ async function main() {
       console.log(`📍 Loaded ${areaMap.size} area records from Supabase`);
     }
 
-    const preparedCafes = mergedCafes.map((cafe) => {
+    const preparedCafes = [];
+    let enrichedCount = 0;
+    for (const cafe of mergedCafes) {
       const slug = generateSlug(cafe.name || 'unknown');
 
       // Determine area from coordinates
       const areaSlug = cafe.area_slug || matchAreaByCoordinates(cafe.latitude, cafe.longitude);
       const areaRecord = areaMap.get(areaSlug);
 
-      return {
-        place_id: cafe.place_id,
-        name: cafe.name,
+      // Foursquare Enrichment
+      const enrichedData = process.env.FOURSQUARE_API_KEY ? await enrichCafeWithFoursquare(cafe) : cafe;
+      if (enrichedData.source.includes('foursquare')) enrichedCount++;
+
+      preparedCafes.push({
+        place_id: enrichedData.place_id,
+        name: enrichedData.name,
         slug,
-        address: cafe.address || null,
+        address: enrichedData.address || null,
         area_id: areaRecord?.id || null,
-        latitude: cafe.latitude,
-        longitude: cafe.longitude,
-        phone: cafe.phone || null,
-        website: cafe.website || null,
-        instagram: cafe.instagram || null,
-        rating: cafe.rating !== undefined && cafe.rating !== null ? cafe.rating : parseFloat((Math.random() * (4.9 - 3.5) + 3.5).toFixed(1)),
-        total_reviews: cafe.total_reviews || Math.floor(Math.random() * 500) + 15,
-        price_level: cafe.price_level || null,
-        opening_hours: cafe.opening_hours ? (typeof cafe.opening_hours === 'string' ? { raw: cafe.opening_hours } : cafe.opening_hours) : {},
-        thumbnail: cafe.thumbnail || null,
-        amenities: cafe.amenities || {},
-        description: cafe.description || null,
-        cuisine_type: cafe.cuisine_type || ['coffee'],
-        source: cafe.source || 'overpass',
-        is_verified: cafe.source === 'seed' || cafe.source === 'seed+overpass',
+        latitude: enrichedData.latitude,
+        longitude: enrichedData.longitude,
+        phone: enrichedData.phone || null,
+        website: enrichedData.website || null,
+        instagram: enrichedData.instagram || null,
+        rating: enrichedData.rating !== undefined && enrichedData.rating !== null ? enrichedData.rating : parseFloat((Math.random() * (4.9 - 3.5) + 3.5).toFixed(1)),
+        total_reviews: enrichedData.total_reviews || Math.floor(Math.random() * 500) + 15,
+        price_level: enrichedData.price_level || null,
+        opening_hours: enrichedData.opening_hours ? (typeof enrichedData.opening_hours === 'string' ? { raw: enrichedData.opening_hours } : enrichedData.opening_hours) : {},
+        photos: enrichedData.photos || [],
+        thumbnail: enrichedData.thumbnail || null,
+        amenities: enrichedData.amenities || {},
+        description: enrichedData.description || null,
+        cuisine_type: enrichedData.cuisine_type || ['coffee'],
+        source: enrichedData.source || 'overpass',
+        is_verified: enrichedData.source === 'seed' || enrichedData.source.includes('seed'),
         last_scraped_at: new Date().toISOString(),
-      };
-    });
+      });
+    }
+    
+    if (enrichedCount > 0) console.log(\`✨ Enriched \${enrichedCount} cafes with Foursquare data\`);
 
     // Filter out cafes without names
     const validCafes = preparedCafes.filter((c) => c.name && c.latitude && c.longitude);
-    console.log(`✅ ${validCafes.length} valid cafes ready for upsert\n`);
+    console.log(\`✅ \${validCafes.length} valid cafes ready for upsert\\n\`);
 
     // ── Step 5: Upsert to Supabase (or log in dry-run) ──
     if (DRY_RUN) {
