@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+
 
 const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
 
